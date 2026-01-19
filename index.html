@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redacted Chat</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 900px; margin: 40px auto; padding: 0 16px; }
+    textarea { width: 100%; height: 90px; padding: 10px; font-size: 16px; }
+    button { padding: 10px 14px; font-size: 16px; cursor: pointer; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; }
+    pre { white-space: pre-wrap; }
+    .muted { color: #666; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Redacted Chat</h1>
+  <p class="muted">Ask a question about <em>Redacted Science</em>.</p>
+
+  <textarea id="q" placeholder="Type your question..."></textarea><br/><br/>
+  <button id="ask">Ask</button>
+
+  <div id="status" class="muted"></div>
+  <div id="out" class="card" style="display:none;"></div>
+  <div id="src" class="card" style="display:none;"></div>
+
+  <script>
+    const api = "https://api.redactedchat.com/chat";
+
+    const q = document.getElementById("q");
+    const ask = document.getElementById("ask");
+    const status = document.getElementById("status");
+    const out = document.getElementById("out");
+    const src = document.getElementById("src");
+
+    async function run() {
+      const question = q.value.trim();
+      if (!question) return;
+
+      ask.disabled = true;
+      status.textContent = "Thinking…";
+      out.style.display = "none";
+      src.style.display = "none";
+
+      try {
+        const r = await fetch(api, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, top_k: 5 })
+        });
+
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "Request failed");
+
+        out.style.display = "block";
+        out.innerHTML = "<h3>Answer</h3><pre></pre>";
+        out.querySelector("pre").textContent = data.answer || "";
+
+        const sources = data.sources || [];
+        src.style.display = "block";
+        src.innerHTML = "<h3>Sources</h3>" + sources.map(s =>
+          `<div class="muted"><b>${escapeHtml(s.source)}</b><br/>${escapeHtml(s.content_preview)}</div><hr/>`
+        ).join("");
+
+        status.textContent = "";
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+      } finally {
+        ask.disabled = false;
+      }
+    }
+
+    function escapeHtml(str) {
+      return (str || "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    ask.addEventListener("click", run);
+    q.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run(); });
+  </script>
+</body>
+</html>
