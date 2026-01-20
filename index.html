@@ -111,6 +111,8 @@
     <a href="#" id="returnLink">← Return to query page</a>
   </div>
 
+<div id="asked" class="frame" style="display:none;"></div>
+    
   <div id="status" class="muted"></div>
   <div id="out" class="card" style="display:none;"></div>
   <div id="src" class="card" style="display:none;"></div>
@@ -129,7 +131,8 @@
     const src = document.getElementById("src");
 
     const chips = document.getElementById("chips");
-
+    const asked = document.getElementById("asked");
+    
     // Ordered for new users first
     const suggestedTopics = [
       "What is Redacted Science about?",
@@ -176,6 +179,9 @@
       queryArea.style.display = "block";
       returnWrap.style.display = "none";
 
+      asked.style.display = "none";
+      asked.innerHTML = "";
+
       // Optional: clear question or keep it; here we keep it for convenience
       q.focus();
     }
@@ -188,7 +194,9 @@
       status.textContent = "Thinking…";
       out.style.display = "none";
       src.style.display = "none";
-
+      asked.style.display = "block";
+      asked.innerHTML = "<h3>Question</h3><pre></pre>";
+      asked.querySelector("pre").textContent = question;
       try {
         const r = await fetch(api, {
           method: "POST",
@@ -241,6 +249,7 @@
   </div>
 </body>
 </html>
+
 
 
 
