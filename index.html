@@ -4,45 +4,60 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Redacted Chat</title>
-  <style>
-    body { font-family: system-ui, Arial; max-width: 900px; margin: 40px auto; padding: 0 16px; }
-    textarea { width: 100%; height: 90px; padding: 10px; font-size: 16px; }
-    button { padding: 10px 14px; font-size: 16px; cursor: pointer; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; }
-    pre { white-space: pre-wrap; }
-    .muted { color: #666; font-size: 13px; }
+ <style>
+  body { font-family: system-ui, Arial; max-width: 900px; margin: 40px auto; padding: 0 16px; }
+  textarea { width: 100%; height: 90px; padding: 10px; font-size: 16px; }
+  button { padding: 10px 14px; font-size: 16px; cursor: pointer; }
+  .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; }
+  pre { white-space: pre-wrap; }
+  .muted { color: #666; font-size: 13px; }
 
-    /* Suggested topics */
-    .topics { margin-top: 14px; }
-    .topics h3 { margin: 0 0 8px 0; font-size: 16px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      border: 1px solid #ddd;
-      background: #fafafa;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 14px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .chip:hover { background: #f3f3f3; }
-    .chip:active { transform: translateY(1px); }
+  /* Suggested topics */
+  .topics { margin-top: 14px; }
+  .topics h3 { margin: 0 0 8px 0; font-size: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1px solid #ddd;
+    background: #fafafa;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip:hover { background: #f3f3f3; }
+  .chip:active { transform: translateY(1px); }
 
-    /* Return link */
-    .return {
-      display: none;
-      margin-top: 14px;
-      font-size: 14px;
+  /* Frame style */
+  .frame {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  /* Return link */
+  .return {
+    display: none;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  .return a { color: #0b57d0; text-decoration: none; }
+  .return a:hover { text-decoration: underline; }
+
+  /* 👇 PUT THE MEDIA QUERY HERE, AT THE END */
+  @media (min-width: 768px) {
+    .frame {
+      padding: 16px 18px;
     }
-    .return a { color: #0b57d0; text-decoration: none; }
-    .return a:hover { text-decoration: underline; }
-  </style>
+  }
+</style>
 </head>
 <body>
   <h1>Redacted Chat</h1>
   <p class="muted">Ask a question about <em>Redacted Science</em>.</p>
 
-  <div class="card" style="margin-bottom:16px;">
+<div class="frame" style="margin-bottom:16px;">
   <strong>Source material</strong>
   <p class="muted" style="margin:6px 0 0 0;">
     This chatbot answers questions using the book <em>Redacted Science</em>.
@@ -212,6 +227,7 @@
   </script>
 </body>
 </html>
+
 
 
 
