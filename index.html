@@ -11,14 +11,55 @@
     .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; }
     pre { white-space: pre-wrap; }
     .muted { color: #666; font-size: 13px; }
+
+    /* Suggested topics */
+    .topics { margin-top: 14px; }
+    .topics h3 { margin: 0 0 8px 0; font-size: 16px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      border: 1px solid #ddd;
+      background: #fafafa;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip:hover { background: #f3f3f3; }
+    .chip:active { transform: translateY(1px); }
+
+    /* Return link */
+    .return {
+      display: none;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+    .return a { color: #0b57d0; text-decoration: none; }
+    .return a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <h1>Redacted Chat</h1>
   <p class="muted">Ask a question about <em>Redacted Science</em>.</p>
 
-  <textarea id="q" placeholder="Type your question..."></textarea><br/><br/>
-  <button id="ask">Ask</button>
+  <!-- QUERY AREA (shown initially) -->
+  <div id="queryArea">
+    <textarea id="q" placeholder="Type your question..."></textarea><br/><br/>
+    <button id="ask">Ask</button>
+
+    <div class="topics card" id="topics">
+      <h3>Suggested topics</h3>
+      <div class="chips" id="chips"></div>
+      <p class="muted" style="margin:10px 0 0 0;">
+        Tip: click a topic to run it instantly. Or type your own question and press <b>Ctrl+Enter</b>.
+      </p>
+    </div>
+  </div>
+
+  <!-- RETURN LINK (shown after answer) -->
+  <div class="return" id="returnWrap">
+    <a href="#" id="returnLink">← Return to query page</a>
+  </div>
 
   <div id="status" class="muted"></div>
   <div id="out" class="card" style="display:none;"></div>
@@ -27,11 +68,65 @@
   <script>
     const api = "https://api.redactedchat.com/chat";
 
+    const queryArea = document.getElementById("queryArea");
+    const returnWrap = document.getElementById("returnWrap");
+    const returnLink = document.getElementById("returnLink");
+
     const q = document.getElementById("q");
     const ask = document.getElementById("ask");
     const status = document.getElementById("status");
     const out = document.getElementById("out");
     const src = document.getElementById("src");
+
+    const chips = document.getElementById("chips");
+
+    // Ordered for new users first
+    const suggestedTopics = [
+      "What is Redacted Science about?",
+      "What does “redacted” mean in Redacted Science?",
+      "Explain the co-evolution theory.",
+      "Why do standard medical tests fail to detect this condition?",
+      "How does Candida function as a “biochemical computer”?",
+      "What is the role of electrolytes, pressure, and fluid control in survival?",
+      "How does this theory change how we think about chronic illness and adaptation?",
+      "Why does this book argue that modern medicine is structurally incomplete—not malicious?"
+    ];
+
+    // Render suggestion chips
+    function renderChips() {
+      chips.innerHTML = suggestedTopics.map((t, i) =>
+        `<div class="chip" data-i="${i}">${escapeHtml(t)}</div>`
+      ).join("");
+
+      chips.addEventListener("click", (e) => {
+        const el = e.target.closest(".chip");
+        if (!el) return;
+        const idx = Number(el.dataset.i);
+        q.value = suggestedTopics[idx];
+        run(); // run immediately
+      });
+    }
+
+    function showResultsMode() {
+      // Hide query input + suggestions
+      queryArea.style.display = "none";
+      // Show return link
+      returnWrap.style.display = "block";
+    }
+
+    function showQueryMode() {
+      // Hide answer + sources
+      out.style.display = "none";
+      src.style.display = "none";
+      status.textContent = "";
+
+      // Show query input + suggestions
+      queryArea.style.display = "block";
+      returnWrap.style.display = "none";
+
+      // Optional: clear question or keep it; here we keep it for convenience
+      q.focus();
+    }
 
     async function run() {
       const question = q.value.trim();
@@ -63,6 +158,9 @@
         ).join("");
 
         status.textContent = "";
+
+        // Switch UI to results mode after success
+        showResultsMode();
       } catch (e) {
         status.textContent = "Error: " + e.message;
       } finally {
@@ -77,7 +175,16 @@
     }
 
     ask.addEventListener("click", run);
-    q.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run(); });
+    q.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run();
+    });
+
+    returnLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      showQueryMode();
+    });
+
+    renderChips();
   </script>
 </body>
 </html>
