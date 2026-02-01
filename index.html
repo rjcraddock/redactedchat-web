@@ -24,6 +24,37 @@
   pre { white-space: pre-wrap; }
   .muted { color: #666; font-size: 13px; }
 
+  /* Toggle Switch */
+  .search-toggle {
+    margin: 16px 0;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .search-toggle label {
+    display: inline-block;
+    margin: 0 8px;
+    cursor: pointer;
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: #fff;
+    border: 2px solid #ddd;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .search-toggle input[type="radio"] {
+    display: none;
+  }
+  .search-toggle input[type="radio"]:checked + span {
+    background: #0b57d0;
+    color: white;
+    border-color: #0b57d0;
+  }
+  .search-toggle label:hover {
+    border-color: #0b57d0;
+  }
+
   /* Suggested topics */
   .topics { margin-top: 14px; }
   .topics h3 { margin: 0 0 8px 0; font-size: 16px; }
@@ -36,9 +67,20 @@
     font-size: 14px;
     cursor: pointer;
     user-select: none;
+    transition: all 0.2s;
   }
   .chip:hover { background: #f3f3f3; }
   .chip:active { transform: translateY(1px); }
+
+  /* Nostr-specific question styling */
+  .chip.nostr-question {
+    background: #e8f4f8;
+    border-left: 3px solid #4A90E2;
+    padding-left: 10px;
+  }
+  .chip.nostr-question:hover {
+    background: #d4ebf5;
+  }
 
   /* Frame style */
   .frame {
@@ -57,7 +99,7 @@
   .return a { color: #0b57d0; text-decoration: none; }
   .return a:hover { text-decoration: underline; }
 
-  /* 👇 PUT THE MEDIA QUERY HERE, AT THE END */
+  /* Media query */
   @media (min-width: 768px) {
     .frame {
       padding: 16px 18px;
@@ -68,14 +110,16 @@
 <body>
   <div class="page">
     <h1>Redacted Chat</h1>
-  <p class="muted">Ask a question about <em>Redacted Science</em>.</p>
+  <p class="muted">Ask a question about <em>Redacted Science</em> or search my Nostr posts.</p>
   <p class="muted">20260128 - Received enough hits to break it, so upgraded Render to the $7 monthly tier</em>.</p>
 <div class="frame" style="margin-bottom:16px;">
   <strong>Source material</strong>
   <p class="muted" style="margin:6px 0 0 0;">
-    This chatbot answers questions using the book <em>Redacted Science</em>.
+    This chatbot can answer questions from two sources:
     <br/>
-    If redirection fails, you can access the source here:
+    <strong>Book mode:</strong> <em>Redacted Science</em>
+    <br/>
+    <strong>Nostr mode:</strong> My personal Nostr posts and articles
   </p>
   <ul style="margin:8px 0 0 18px;">
     <li>
@@ -94,6 +138,18 @@
 
   <!-- QUERY AREA (shown initially) -->
   <div id="queryArea">
+    <!-- TOGGLE SWITCH -->
+    <div class="search-toggle">
+      <label>
+        <input type="radio" name="searchSource" value="book" checked>
+        <span>📚 Search Book</span>
+      </label>
+      <label>
+        <input type="radio" name="searchSource" value="nostr">
+        <span>🌐 Search Nostr Posts</span>
+      </label>
+    </div>
+
     <textarea id="q" placeholder="Type your question..."></textarea><br/><br/>
     <button id="ask">Ask</button>
 
@@ -102,6 +158,10 @@
       <div class="chips" id="chips"></div>
       <p class="muted" style="margin:10px 0 0 0;">
         Tip: click a topic to run it instantly. Or type your own question and press <b>Ctrl+Enter</b>.
+        <br/>
+        <span style="display:inline-block; margin-top:6px;">
+          📘 = Book questions &nbsp;|&nbsp; 🌐 = Nostr post questions (shaded)
+        </span>
       </p>
     </div>
   </div>
@@ -133,67 +193,87 @@
     const chips = document.getElementById("chips");
     const asked = document.getElementById("asked");
     
-    // Ordered for new users first
+    // Questions with source type: 'book' or 'nostr'
     const suggestedTopics = [
-      "What is Redacted Science about?",
-      "What does “redacted” mean in Redacted Science?",
-      "What reasons are given for the redaction of this science?",
-      "What does the centralization of medicine and science have to do with Redacted Science?",
-      "How does control over what gets indexed or remembered shape medicine, science, and the FUTURE itself?",
-      "Explain the co-evolution theory.",
-      "Why do standard medical tests fail to detect this condition?",
-      "How does Candida function as a “biochemical computer”?",
-      "Explain the theory around how phenobarbitol was involved in this case study.",
-      "What is the role of electrolytes, pressure, and fluid control in survival?",
-      "What stages are involved in this condition?",
-      "How do the sequenced stages in this condition justify the theory of co-evolution?",
-      "Tell me about FATMS and the symptoms it caused.",
-      "How does this theory change how we think about chronic illness and adaptation?",
-      "Why does this book argue that modern medicine is structurally incomplete—not malicious?",
-      "Who is the Author of the Article discussed in Redacted Science and what were their motivations?",
-      "Who might have been involved in the original research, and what are their backgrounds?",
-      "Why is this condition so existential for the author?",
-      "Tell me about the author's IN case of ER (emergency Room) document and what else he says about the dangers of normal clinical inquiry into his condition and why he avoids traditional clinical care.",
-      "Tell me about the system in the note from the architect?",
-      "Explain how the most recent 6 months discussed in the text have been for the author."
+      // BOOK QUESTIONS
+      { text: "What is Redacted Science about?", source: "book" },
+      { text: "What does \"redacted\" mean in Redacted Science?", source: "book" },
+      { text: "What reasons are given for the redaction of this science?", source: "book" },
+      { text: "What does the centralization of medicine and science have to do with Redacted Science?", source: "book" },
+      { text: "How does control over what gets indexed or remembered shape medicine, science, and the FUTURE itself?", source: "book" },
+      { text: "Explain the co-evolution theory.", source: "book" },
+      { text: "Why do standard medical tests fail to detect this condition?", source: "book" },
+      { text: "How does Candida function as a "biochemical computer"?", source: "book" },
+      { text: "Explain the theory around how phenobarbitol was involved in this case study.", source: "book" },
+      { text: "What is the role of electrolytes, pressure, and fluid control in survival?", source: "book" },
+      { text: "What stages are involved in this condition?", source: "book" },
+      { text: "How do the sequenced stages in this condition justify the theory of co-evolution?", source: "book" },
+      { text: "Tell me about FATMS and the symptoms it caused.", source: "book" },
+      { text: "How does this theory change how we think about chronic illness and adaptation?", source: "book" },
+      { text: "Why does this book argue that modern medicine is structurally incomplete—not malicious?", source: "book" },
+      { text: "Who is the Author of the Article discussed in Redacted Science and what were their motivations?", source: "book" },
+      { text: "Who might have been involved in the original research, and what are their backgrounds?", source: "book" },
+      { text: "Why is this condition so existential for the author?", source: "book" },
+      { text: "Tell me about the author's IN case of ER (emergency Room) document and what else he says about the dangers of normal clinical inquiry into his condition and why he avoids traditional clinical care.", source: "book" },
+      { text: "Tell me about the system in the note from the architect?", source: "book" },
+      { text: "Explain how the most recent 6 months discussed in the text have been for the author.", source: "book" },
+
+      // NOSTR QUESTIONS (add yours here - these are examples)
+      { text: "What did I write about AI and creativity?", source: "nostr" },
+      { text: "What are my thoughts on Bitcoin?", source: "nostr" },
+      { text: "What have I said about decentralization?", source: "nostr" },
+      { text: "What are my recent posts about technology?", source: "nostr" }
     ];
 
-    // Render suggestion chips
+    // Get current search source
+    function getSearchSource() {
+      return document.querySelector('input[name="searchSource"]:checked').value;
+    }
+
+    // Render suggestion chips - filter based on selected source
     function renderChips() {
-      chips.innerHTML = suggestedTopics.map((t, i) =>
-        `<div class="chip" data-i="${i}">${escapeHtml(t)}</div>`
-      ).join("");
+      const currentSource = getSearchSource();
+      const filtered = suggestedTopics.filter(t => t.source === currentSource);
+      
+      chips.innerHTML = filtered.map((t, i) => {
+        const cssClass = t.source === 'nostr' ? 'chip nostr-question' : 'chip';
+        return `<div class="${cssClass}" data-text="${escapeHtml(t.text)}">${escapeHtml(t.text)}</div>`;
+      }).join("");
 
       chips.addEventListener("click", (e) => {
         const el = e.target.closest(".chip");
         if (!el) return;
-        const idx = Number(el.dataset.i);
-        q.value = suggestedTopics[idx];
+        q.value = el.dataset.text;
         run(); // run immediately
       });
     }
 
+    // Update chips when toggle changes
+    document.querySelectorAll('input[name="searchSource"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        renderChips();
+        // Update placeholder based on source
+        if (getSearchSource() === 'book') {
+          q.placeholder = "Ask about Redacted Science...";
+        } else {
+          q.placeholder = "Search my Nostr posts...";
+        }
+      });
+    });
+
     function showResultsMode() {
-      // Hide query input + suggestions
       queryArea.style.display = "none";
-      // Show return link
       returnWrap.style.display = "block";
     }
 
     function showQueryMode() {
-      // Hide answer + sources
       out.style.display = "none";
       src.style.display = "none";
       status.textContent = "";
-
-      // Show query input + suggestions
       queryArea.style.display = "block";
       returnWrap.style.display = "none";
-
       asked.style.display = "none";
       asked.innerHTML = "";
-
-      // Optional: clear question or keep it; here we keep it for convenience
       q.focus();
     }
 
@@ -201,18 +281,27 @@
       const question = q.value.trim();
       if (!question) return;
 
+      const searchSource = getSearchSource();
+
       ask.disabled = true;
       status.textContent = "Thinking…";
       out.style.display = "none";
       src.style.display = "none";
       asked.style.display = "block";
-      asked.innerHTML = "<h3>Question</h3><pre></pre>";
+      
+      const sourceLabel = searchSource === 'book' ? '📚 Book' : '🌐 Nostr Posts';
+      asked.innerHTML = `<h3>Question (searching: ${sourceLabel})</h3><pre></pre>`;
       asked.querySelector("pre").textContent = question;
+      
       try {
         const r = await fetch(api, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, top_k: 5 })
+          body: JSON.stringify({ 
+            question, 
+            top_k: 5,
+            source_type: searchSource  // Pass 'book' or 'nostr' to backend
+          })
         });
 
         const data = await r.json();
@@ -229,8 +318,6 @@
         ).join("");
 
         status.textContent = "";
-
-        // Switch UI to results mode after success
         showResultsMode();
       } catch (e) {
         status.textContent = "Error: " + e.message;
@@ -260,21 +347,3 @@
   </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
